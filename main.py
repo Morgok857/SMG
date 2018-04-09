@@ -114,4 +114,3 @@ if not args.run == None:
 			os.system(ky[1])
 			break
 
-	search_conf(args.run[0])
