@@ -1,17 +1,12 @@
 # Script para administrar conexiones en Linux
 
-## Versión 1.07
+## Versión 1.09
 
 ## Requerimientos:
 - python3
-- sshpass (Opcional, solo en caso de necesitar almacenar passwords para el ssh)
-
-## Descripcion
-
-Script originalmente diseñado para gestionar las conexiones ssh pero puede ser utilizado para gestionar accesos a diferentes servicios. 
-
-
-## Parametros:
+- sshpass (Optional)
+        
+## Parámetros:
 
 	optional arguments:
 	  -h, --help            show this help message and exit
@@ -22,24 +17,31 @@ Script originalmente diseñado para gestionar las conexiones ssh pero puede ser 
 	  -f FILE, --file FILE  Utiliza el archivo de sesiones especificado
 	  -cfg, --cfg           Lista los archivos de configuracion
 	  -c COMMAND, --command COMMAND  Run command
+  	  --default_env DEFAULT_ENV DEFAULT_ENV  Configura el entorno por defecto
 
 
 ## Ejemplos de uso:
     
-	$ python3 /home/ptessarolo/SMG/main.py --run PRD1_prod
+	$ python3 /home/ptessarolo/SMG/main.py --run gitlab_prod
     
-	$ python3 /home/ptessarolo/SMG/main.py -s QA
+	$ python3 /home/ptessarolo/SMG/main.py -s gitlab
 
 
 ## Configuración:
 **Habilitar el modo DEBUG:**
 	
-	En caso de necesitar habilitar el modo debug deben ingresar en el archivo **main.py** buscar la variable "log_level=" y cambiar el valor asignado de INFO a DEBUG
+	En caso de necesitar habilitar el modo debug se debe utilizar el parámetro "--default_env" 
+	indicando que necesitamos alterar el valor de log_level. Este los valores permitidos son de INFO a DEBUG
+
+    Ej: 
+            python3 /home/ptessarolo/SMG/main.py --default_env log_level DEBUG
+    
+    
 **Agregar/Modificar/Eliminar Host**
 	
-	Los hosts deben ser configurados en el archivo **ssh_connection.cfg**.
-	Dentro del archivo se deben declarar los hosts debajo de la línea  **[Sshkey]**
-	Cada Host debe declararse en una nueva línea.
+	Los hosts deben ser configurar en un archivo *.cfg (Ej: **myhost.cfg**) dentro del subdirectorio **env/**
+	Dentro del archivo se deben declarar los hosts debajo de la línea **[Sshkey]**
+	Cada Host debe declararse en una nueva linea.
 	
 	El host se debe declararse de la siguiente forma:
 		
@@ -47,10 +49,10 @@ Script originalmente diseñado para gestionar las conexiones ssh pero puede ser 
 	
 	Ejemplo del contenido del archivo:
 	
-	$ cat ssh_connection.cfg
+	$ cat myhost.cfg
 	[Sshkey]
 	servidor1 = sysadmin@192.168.3.1
-
+	
 ## Instalación:
 - Descargar el repositorio: 
 
@@ -58,59 +60,70 @@ Script originalmente diseñado para gestionar las conexiones ssh pero puede ser 
 
 - Ingresar al directorio creado:
 		
-    	$ cd SMG
+    	    $ cd SMG
 
 - Copiar el archivo de configuración base:
 	
-	    $ cp ssh_connection.cfg.template ssh_connection.cfg
+	    $ mv global_config.cfg.template global_config.cfg
 	
 - Agregar el o los hosts en la configuración.
+	    $ cd env
+	    $ mv myhost.template myhost.cfg 
 	
 - Se recomienda crear un alias agregando en el archivo .bashrc o .bash_alias la siguiente línea:
 
-	    alias SMG='python3 /home/ptessarolo/SMG/main.py'
-			
+	    alias ssh_manager='python3 /home/ptessarolo/SMG/main.py'
+
+- Configuramos el Path para guardar los Logs en el directorio Home del usuario:
+		
+	   $ /home/ptessarolo/SMG/main.py --default_env log_path $(echo $HOME)
+
+- Validamos su funcionamiento listando los hosts disponibles:
+	   $ /home/ptessarolo/SMG/main.py -l
 
 ## Manejando varios archivos de host.
 	
-	La aplicación puede manejar varios archivos para separar los hosts por "cliente".
+	La aplicación puede manejar varios "entornos" para separar los hosts por cliente, entorno, tipo de servidor, etc.
 
-	Para esto se debe crear en el directorio donde está el script los diferentes archivos de cada "cliente".
+	Para esto se debe crear en el subdirectorio env/ los diferentes archivos de cada "entorno".
 
-	Para utilizar un archivo de host diferente al por defecto se debe utilizar el parámetro -f Nombre_del_archivo.
+	Para utilizar un entorno diferente al por defecto se debe utilizar el parámetro -f Nombre_del_archivo.
 		
 		Ejemplo:
 	
-			$ python3 /home/ptessarolo/SMG/main.py -f proyecto_x.cfg -l
-			PRD1
-			QA1
-			QA2
-			DEV1
+			$ python3 /home/ptessarolo/SMG/main.py -f linux_proxys -l
+			proxy7
+			proxy8
+			proxy9
     
-    Para lista los archivos de configuración se puede utilizar el parametro --cfg.
+    Para lista los archivos de configuración, se puede utilizar el parámetro --cfg.
         
         Ejemplo:
         
             $ python3 /home/ptessarolo/SMG/main.py --cfg
-            ssh_connection.cfg
-            cliente1.cfg
-            clente1.cfg
-            aws.cfg
-            docker1.cfg
+            myhost.cfg
+            linux_proxys.cfg
+            Windows_AD.cfg
             
 ## Ejecución de script en un host remoto
 	Con el parámetro -c o --command se puede enviar un comando para que lo ejecute en el host seleccionado
 
 	Ej:
-		python3 /home/ptessarolo/SMG/main.py -r miweb_prod -c "sudo ps axu| grep ngnix"
+		python3 /home/ptessarolo/SMG/main.py -r proxy8 -c "sudo ps axu| grep java"
+
+## Modificar configuración
+
+	Para modificar los valores de la configuración podemos usar el parámetro --default_env. Este parámetro recibe 2 argumentos. 
+	El primero es el nombre de la configuración que queremos cambiar y el segundo es el valor que queremos configurar.
+
+	Ej:
+		python3 /home/ptessarolo/SMG/main.py --default_env default_env PROD-host.cfg
+
 
 ## Temas pendientes:
-- Implementar compatibilidad con sistemas Windows.
-- Implementar mejora en el sistema de almacenamiento de las credenciales.
-- Separar las configuración del código principal
-- Terminar control de errores.
-- Agregar la posibilidad de ejecutar scripts en varios hosts remotos a la vez.
-- Mejorar los comentarios en el código.
-
-
+- Terminar control de errores
+- Agregar la posibilidad de ejecutar scripts en varios hosts remotos a la vez
+- Mejorar los comentarios en el código
+- Actualizar la documentación
+- Agregar comando para auto configurar el entorno.
     

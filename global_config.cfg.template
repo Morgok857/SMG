@@ -1,0 +1,6 @@
+[GENERAL]
+version = 1.09
+default_env = myhost.cfg
+log_level = INFO
+log_path = /tmp
+
